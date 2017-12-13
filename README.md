@@ -8,21 +8,21 @@ This report explores the Prosper’s loan data, which contains 113,937 loans wit
 
 The tasks in this project are as follows:
 
-**Introduction
-**Univariate Plots Section
-**Univariate Analysis
-**Bivariate Plots Section
-**Bivariate Analysis
-**Multivariate Plots Section
-**Multivariate Analysis
-**Final Plots and Summary: I selected three plots from the whole analysis to polish and shared in this section.
-**Reflaction 
+* Introduction
+* Univariate Plots Section
+* Univariate Analysis
+* Bivariate Plots Section
+* Bivariate Analysis
+* Multivariate Plots Section
+* Multivariate Analysis
+* Final Plots and Summary: I selected three plots from the whole analysis to polish and shared in this section.
+* Reflaction 
 
 [Link to the PDF report](https://github.com/EntingHsiao/ProsperLoan/blob/master/prosperprojectforgithub.pdf)
 
 
 ## Files
 
-**The RMD file that contains the analysis, final plots and summary, and reflection. 
-**The HTML file that was knitted from RMD file
-**The CSV file is the data set I used
+* The RMD file that contains the analysis, final plots and summary, and reflection. 
+* The HTML file that was knitted from RMD file
+* The CSV file is the data set I used
