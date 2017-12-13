@@ -1,0 +1,944 @@
+Exploratory  Analysis Project-Prosper Loan  by Connie Hsiao
+========================================================
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Load all of the packages that you end up using in your analysis in this code
+# chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk. This
+# prevents the code from displaying in the knitted HTML output. You should set
+# echo=FALSE for all code chunks in your file, unless it makes sense for your
+# report to show the code that generated a particular plot.
+
+# The other parameters for "message" and "warning" should also be set to FALSE
+# for other code chunks once you have verified that each plot comes out as you
+# want it to. This will clean up the flow of your report.
+
+library(ggplot2)
+library(knitr)
+library(dplyr)
+library(scales)
+library(memisc)
+library(GGally)
+library(gridExtra)
+library(RColorBrewer)
+library(tidyr)
+library(lattice)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Load the data
+df_raw = read.csv("prosperLoanData.csv")
+cols_to_use = c(
+  "ListingCreationDate", "CreditGrade", "Term", "LoanStatus", "BorrowerRate", 
+  "ProsperRating..Alpha.", "ListingCategory..numeric.", "BorrowerState", 
+  "Occupation", "EmploymentStatus", "EmploymentStatusDuration", 
+  "IsBorrowerHomeowner", "CreditScoreRangeLower", "CreditScoreRangeUpper", 
+  "FirstRecordedCreditLine", "CurrentCreditLines", "OpenCreditLines",
+  "TotalCreditLinespast7years", "OpenRevolvingAccounts", 
+  "InquiriesLast6Months",
+  "CurrentDelinquencies", "AmountDelinquent", "DelinquenciesLast7Years",
+  "PublicRecordsLast10Years", "BankcardUtilization",
+  "AvailableBankcardCredit", "TotalTrades", "TradesNeverDelinquent..percentage.",
+  "TradesOpenedLast6Months", "DebtToIncomeRatio", "IncomeVerifiable",
+  "StatedMonthlyIncome", "LoanOriginalAmount", "MonthlyLoanPayment","IncomeRange",
+  "Investors"
+)
+
+df = df_raw[ , (names(df_raw) %in% cols_to_use)]
+
+
+```
+
+# 1. Introduction
+
+Prosper Marketplace,Inc., which was founded in 2005, is America's first peer-to-peer lending marketplace, Borrowers request personal loans on Prosper and investors (individual or institutional) can fund anywhere from $2,000 to $35,000 per loan request.
+
+This report explores the Prosper's loan data, which contains 113,937 loans with 81 variables on each loan, and it was Last updated on 03/11/2014. The dataset will be used for exploring two main ideas 1) Investors' preferences 2)The relationship between borrowers'characteristics and the risks.   
+
+```{r echo=FALSE}
+
+dim(df)
+str(df)
+
+```
+
+# 2. Univariate Plots Section
+
+## 2-1 Investors
+
+The investors can use the invest tool to browse loans by multiple criteria and fund the selected loan requests, and there might be several investors per loan request, so let's begin with the 'Investors' variable.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(aes(x = Investors),  data= df) +
+  geom_histogram(color='black', fill = '#00c5ff') 
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+summary(df$Investors)
+
+```
+
+Most loans (75%) received the funding from less than 115 investors.
+Now, let's dig deeper into the characteristics of loans and borrowers.
+
+## 2-2 Listing Category
+
+The category of the listing is what the borrower selected as the purpose of the loan when posting their listing. In order to make the plot readable, I converted the numeric values to the corresponding factors(labels). Moreover, I also take the square root of the count.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+df$ListingCategory = factor(df$ListingCategory..numeric., levels = 0:20)
+levels(df$ListingCategory) = c('Not Available',
+                                   'Debt Consolidation',
+                                   'Home Improvement',
+                                   'Business',
+                                   'Personal Loan',
+                                   'Student Use',
+                                   'Auto',
+                                   'Other',
+                                   'Baby&Adoption',
+                                   'Boat',
+                                   'Cosmetic Procedure',
+                                   'Engagement Ring',
+                                   'Green Loans',
+                                   'Household Expenses',
+                                   'Large Purchases',
+                                   'Medical/Dental',
+                                   'Motorcycle',
+                                   'RV',
+                                   'Taxes',
+                                   'Vacation',
+                                   'Wedding Loans')
+
+ggplot(df,aes(ListingCategory)) + 
+      geom_bar(color='black', fill = '#00c5ff')+
+      scale_y_sqrt() +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+       ylab('Square root of count')
+    
+
+```
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+prop.table(table(df$ListingCategory))
+
+```
+
+Debt Consolidation is the commonest purpose of the loan requests, more than 50% of the borrowers use the funding for debt consolidation. 
+
+## 2-3 LoanOriginalAmount 
+
+How about the loan amounts? Let's taka a look at the origination amount of the loans.
+
+```{r echo=FALSE, ,message=FALSE, warning=FALSE}
+
+ggplot(data=df,aes(x=LoanOriginalAmount))+
+    geom_histogram(binwidth=5000,color='black', fill ='#00c5ff')+
+    scale_x_continuous(limits = c(999, 35001), breaks=seq(0,35000,5000))
+    
+
+```
+
+Most of the loan original amount values are between $1,000 and $15,000
+
+```{r echo=FALSE, ,message=FALSE, warning=FALSE}
+
+summary(df$LoanOriginalAmount)
+
+```
+
+The mininmum is $1,000, the maximum is $35,000, and the median as $6.500
+
+## 2-4 Prosper Ratings
+
+Prosper Ratings, from lowest-risk to highest-risk, are labeled AA, A, B, C, D, E, and HR ("High Risk"). Applicable for loans originated after July 2009.
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+ggplot(df,aes(ProsperRating..Alpha.)) + 
+    geom_bar(color='black', fill = '#00c5ff')
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+summary(df$ProsperRating..Alpha.)
+
+```
+
+Prosper Ratings of A,B and C are three major ratings among the loans.
+
+## 2-5 Interest Rate
+
+The Borrower's interest rate for this loan.
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+ggplot(df,aes(BorrowerRate)) + 
+    geom_histogram(binwidth=0.05,color='black', fill = '#00c5ff')+
+    scale_x_continuous(limits = c(0, 0.5), breaks=seq(0,0.5,0.05))
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+summary(df$BorrowerRate)
+
+```
+
+## 2-6 Loan Status
+
+The current status of the loan: Cancelled, Chargedoff, Completed, Current, Defaulted, FinalPaymentInProgress, PastDue. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+table(df$LoanStatus)
+
+```
+
+The PastDue Status was subdivided into six factors by the delinquency periods, and I would like to add a new row "LoanStatusNew" which all the PastDue Status will be grouped by only one factor so that I can use it to find out the correlations between risk and other variables. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+df$LoanStatusNew=df$LoanStatus
+levels(df$LoanStatusNew) = c('Cancelled','Chargedoff',"Completed","Current","Defaulted","FinalPaymentInProgress","Past Due","Past Due","Past Due","Past Due","Past Due","Past Due")
+ggplot(df,aes(LoanStatusNew)) + 
+    geom_bar(color='black', fill = '#00c5ff')
+
+```
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+table(df$LoanStatusNew)
+prop.table(table(df$LoanStatusNew))
+
+```
+
+More than 10% of the loans are charge-off, 4% are defaulted, and nearly 2% of the loans are past due.
+
+Next, I would like to know more about the borrowers. 
+
+## 2-7 Borrowers' States
+
+The state of the address of the borrower at the time the Listing was created, and a heatmap might be a perfect fit for this geographical variable.
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+df_state_count = data.frame(table(df$BorrowerState))
+colnames(df_state_count) = c("state.abb", "count")
+
+data(state)
+states = map_data("state")
+
+df_state_mapping = data.frame(state.name, state.abb)
+df_state_count = merge(df_state_count, df_state_mapping, by="state.abb")
+df_state_count = cbind(df_state_count[1:2], apply(df_state_count[3], 2, tolower))
+colnames(df_state_count) = c("state.abb", "count", "region")
+
+df_heatmap = merge(states, df_state_count, by="region")
+
+snames = data.frame(region=tolower(state.name), long=state.center$x, lat=state.center$y)
+
+snames = merge(snames, df_state_count, by="region")
+
+ggplot(df_heatmap, aes(long, lat)) + geom_polygon(aes(group=group, fill=count)) + geom_text(data=snames, aes(long, lat, label=count))+
+    scale_fill_gradientn(colours = brewer.pal(9, "Blues"))
+
+```
+
+With the heatmap above, we can see that California has the largest number of borrowers. 
+
+## 2-8 Length of Credit History
+
+To have a roughly understanding about the length of borrowers' credit history, I would like to create a new variable, creditlength, by using the difference between two available variables-FirstRecordedCreditLine and ListingCreationDate. As mentioned before, I just want a roughly understanding about the length and see if there is any value for further exlporing, so I only use the year in the variables to calculate. By doing so, we can know how many years the borrowers'lengths of credit history are.
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+df_length_transform = data.frame(df$FirstRecordedCreditLine, df$ListingCreationDate)
+df_length_transform$firstrecordinyear=substring(df_length_transform$df.FirstRecordedCreditLine,1,4)
+df_length_transform$listingdateinyear=substring(df_length_transform$df.ListingCreationDate,1,4)
+df_length_transform$listingdateinyear=as.numeric(df_length_transform$listingdateinyear)
+df_length_transform$firstrecordinyear=as.numeric(df_length_transform$firstrecordinyear)
+df$creditlength=df_length_transform$listingdateinyear-df_length_transform$firstrecordinyear
+
+ggplot(df,aes(creditlength)) + 
+    geom_histogram(color='black', fill = '#00c5ff')
+
+```
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+summary(df$creditlength)
+
+```
+
+The length of credit history shows a normal distribution , and more than 50% of the borrowers have more than 16-year-long credit history. 
+
+## 2-9 Credit Scores
+
+Credit score represents the creditworthiness of a borrower, and it is also used by banks or other lenders to evaluate the potential risk of a loan. 
+Here, I am going to use CreditScoreRangeLower, the lower value representing the range of the borrower's credit score as provided by a consumer credit rating agency, to see the borrowers' credit scores.
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+ggplot(df,aes(CreditScoreRangeLower)) + 
+    geom_histogram(color='black', fill = '#00c5ff')
+
+```
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+summary(df$CreditScoreRangeLower) 
+
+```
+
+The credit scores are nearly normally distributed, with means of 685.6, which is much better than I expected. 
+
+## 2-10 BankcardUtilization 
+
+Now, I would like to look into the credit lines closer. Let's begin with 
+the utilization of the revolving credits. The variable shows the percentage of available revolving credit that is utilized at the time the credit profile was pulled.
+
+To remove the 1% outliers, I use the quantile function and create the plot with 99% of the data. 
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+ggplot(df,aes(x=BankcardUtilization))+
+    geom_histogram(color='black', fill = '#00c5ff')+
+     xlim(0, quantile(df$BankcardUtilization, 0.99, na.rm = TRUE))
+
+```
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+summary(df$BankcardUtilization)
+
+```
+
+More than a half of the borrowers use 60% of the revolving credits.
+
+## 2-11 Closed-end credit line
+
+Unlike open credit lines, closed-end credit provides a fixed amount of money to finance a specific purpose and period of time. The loan may require periodic principal and interest payments,or payment of the entire principal at the end of the loan term. Many financial institutions refer to closed-end credit as an installment loan or a secured loan.
+Generally, real estate and auto loans are closed-end credit, and credit cards are revolving lines of credit or open-end. 
+I think closed-end credit line might be a good variable to predict the risk later, so I will create a new variable 'Closedendcredit' by two on hand variables, 'CurrentCreditLines' and 'OpenCreditLines'. The diffrence between the variables will be the quantities of the closed-end credit line.  
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+df$Closedendcredit=df$CurrentCreditLines-df$OpenCreditLines
+
+ggplot(aes(x =Closedendcredit), 
+       data=subset(df[!with(df,is.na(CurrentCreditLines)& is.na(OpenCreditLines)),]))+
+    geom_histogram(color='black', fill = '#00c5ff')+
+    scale_x_continuous(limits = c(-1, 24), breaks=seq(0,24,1))
+
+```
+
+Not all the borrowers have a closed-end credit line, and most closed-end credit lines owners have 1 or 2, but still, we can examine if the closed-end credit lines oweners would cause less charge-off or delinquencies later. 
+
+## 2-12 TradesNeverDelinquent
+
+In the next plot, I will explore the percentages of each borrower 's trades that have never been delinquent at the time the credit profile was pulled.
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+ggplot(data=df,aes(x=TradesNeverDelinquent..percentage.))+
+    geom_histogram(color='black', fill = '#00c5ff')
+
+```
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+summary(df$TradesNeverDelinquent..percentage.)
+
+```
+
+It seems that most of the borrowers are successful in repayment.
+
+## 2-13 StatedMonthlyIncome
+
+As for the borrowers' income, I created the plot below with the variable 'StatedMonthlyIncome', which is the monthly income the borrower stated at the time the listing was created. 
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+summary(df$StatedMonthlyIncome)
+
+```
+
+The minimum is $0, the median is $4,667, and the maximum is $1,750,000. There are some significant outliers, so I Limited the values to 99% quantile to avoid the outlier issue. 
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+ggplot(data=df,aes(x=StatedMonthlyIncome))+
+    geom_histogram(binwidth=2500, color='black', fill = '#00c5ff')+
+    xlim(0, quantile(df$StatedMonthlyIncome, 0.99, na.rm = TRUE))
+
+```
+
+From the plot and summary above, we learn that most of the borrowers' annuel income is less than $100,000. However, knowing the income is not enough, the debt to income ration will give us a better understanding about the borrowers' financial status.
+
+## 2-14 DebtToIncomeRatio
+
+The debt to income ratio of the borrower at the time the credit profile was pulled. This value is Null if the debt to income ratio is not available. This value is capped at 10.01 (any debt to income ratio larger than 1000% will be returned as 1001%).
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+summary(df$DebtToIncomeRatio)
+
+```
+
+The minimum is 0, the median is 0.22, and the maximum is 10.010. Again, there are some significant outliers, so I Limited the values to 99% quantile to avoid the outlier issue.  
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+ggplot(data=df,aes(x=DebtToIncomeRatio))+
+    geom_histogram(color='black', fill = '#00c5ff')+
+    xlim(0, quantile(df$DebtToIncomeRatio, 0.99, na.rm = TRUE))
+
+```
+
+The debt to income ratio histogram shows a positively skewed, normal distribution, and more than 75% of the borrowers have the debt to income ratio less than 0.32. 
+
+
+# 3. Univariate Analysis
+
+### What is the structure of your dataset?
+There are 113,937 observations in the Prosper loan data with 81 variables. However, I have narrowed the variables down to 35 by removing the similar information. In the univariate analysis section, I employed 19 variables, including 10 continuous Variables and 9 categorical variables.
+
+Continuous Variables: Investors,LoanOriginalAmount,BorrowerRate,BankcardUtilization, 
+TradesNeverDelinquent,StatedMonthlyIncome,DebtToIncomeRatio,PublicRecordsLast10Years, 
+CurrentCreditLines and OpenCreditLines.   
+Categorical Variables:ListingCategory,ProsperRatings,Term,LoanStatus,BorrowerState,
+ IsBorrowerHomeowner, CreditScoreRangeLower,FirstRecordedCreditLine and ListingCreationDate.
+
+### What is/are the main feature(s) of interest in your dataset?
+The main features in the dataset is loan status and investors. I position myself as an analyst in Prosper Marketplace and there are two main investigations in this report. First, I’d like to determine which features are best for predicting the risk of charge-off or default, so loan status is the dependent variable of this analysis. Second, I would like know about investors' preferences, so I will use investors to figure out which variables are the criteria that the investor would value more while choosing the loan requests.   
+
+### What other features in the dataset do you think will help support your \
+investigation into your feature(s) of interest?
+ListingCategory,CreditScoreRangeLower, ProsperRatings, LoanOriginalAmount,Term, and BorrowerRate likely contribute to the average numbers of the investors. 
+As for loan status, I think CreditScoreRangeLower, DebttoIncomeRatio, BorrowerRate, LoanOriginalAmount, StatedMonthlyIncome, TradesNeverDelinquent and Bankcard Utilization probably contribute to the the loss or risk.
+
+### Did you create any new variables from existing variables in the dataset?
+I created two new variables, 'Length of Credit History' and 'Closed-end credit line'.
+
+I use the exsting variables, FirstRecordedCreditLine and ListingCreationDate to calculate the borrowes' lengnth of credit history. 
+Moreover, I also use ‘CurrentCreditLines’ and ‘OpenCreditLines’ to create the new variable 'Closed-end credit line'.Both of the new variables might be helpful for the risk analysis later.
+
+### Of the features you investigated, were there any unusual distributions? \
+Did you perform any operations on the  to tidy, adjust, or change the form \
+of the ? If so, why did you do this?
+
+1. PublicRecordsLast10Years was a continuous numeric variable, but I coverted it to boolean value, so I can see how many borrowers have public records clearly. 
+
+2. LoanStatus had 12 factors, and 6 of the factors are Pastdue status (different delinquency period ), but I want the data to be simplier, so I combine the 6 pastdue factors as one.
+
+3. ListingCategory was a set of numbers, which represent different categories: 0 - Not Available, 1 - Debt Consolidation, 2 - Home Improvement, 3 - Business, 4 - Personal Loan, 5 - Student Use, 6 - Auto, 7- Other, 8 - Baby&Adoption, 9 - Boat, 10 - Cosmetic Procedure, 11 - Engagement Ring, 12 - Green Loans, 13 - Household Expenses, 14 - Large Purchases, 15 - Medical/Dental, 16 - Motorcycle, 17 - RV, 18 - Taxes, 19 - Vacation, 20 - Wedding Loans. In order to make the plot readable, I converted the numeric factors to string factors.
+
+4. Instead of histogram, an US map of heatmap can be a more graphic visualization for BorrowerState.
+To create the heatmap, I needed to seperate the BorrowerState to two row: State.name and numbers in the fisrt place. Later, I have transferred the states' abbreviation to all lowercase full names and merge both of the rows to the set called "map" in library(map).   
+
+
+# 4. Bivariate Plots Section
+
+In the section, I will focus on two main features of interest in the report-Investors and Loan Status. 
+Unlike the univariate plots above, , I will also start using multiple colors in the bivariate plots for better visualization.  
+
+# What attract investors?
+
+## 4-1 Investors & Listing Category 
+
+First, what purpose of loans are more popular among investors? There are 20 categories that borrowers can select and we already know that 'Debt Consolidation' accounts for 50% based on the univariate plot above. However, to answer the question, the numbers I need here are the average investors for each categories. Therefore, I used the 'group by' function to calculate the mean investors of all the categories.   
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+df_mean_investor_per_category=aggregate(df$Investors, list(df$ListingCategory), mean)
+
+colnames(df_mean_investor_per_category) = c("Category", "Investors_per_llisting")
+
+ggplot(aes(x =Category, y = Investors_per_llisting),  data= df_mean_investor_per_category) +
+  geom_bar(stat = "identity",color='black', fill = '#00c5ff')+
+  theme(axis.text.x = element_text(angle = 70, hjust = 1))
+
+
+```
+
+'Business' accounts for only 6% of the all listings, but it is the the most popular category among investors. Every 'Business' loan can attract more than 120 investors.  
+
+## 4-2 Investors & Loan Satus 
+
+Did the investment pay off? Let's see if the numbers of average investor very in different loan status.
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+df_mean_investor_per_status=aggregate(df$Investors, list(df$LoanStatusNew), mean)
+
+colnames(df_mean_investor_per_status) = c("Loan_Status", "Investors_per_status")
+
+ggplot(aes(x =Loan_Status, y = Investors_per_status, fill=Loan_Status),  data= df_mean_investor_per_status) +
+  geom_bar(stat = "identity",color='black', fill = '#00c5ff')+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+From the plot and the table above, we can learn that the average investors of chargedoff and defaulted loan are more than the loans lebeled with'FinalPaymentInProgress' and 'current' but less tan the completed loans.
+
+## 4-3  Investors & Credit Scores 
+
+Dose the credit scores matter? I use 'CreditScoreRangeLower' here as what I did in univariate section.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(RColorBrewer)
+
+ggplot(aes(x = CreditScoreRangeLower, y =Investors),data =df) +
+    geom_point(alpha=0.2, color='#00c5ff' )+
+     geom_vline( xintercept = 680, linetype=5, color = "red")
+    
+```
+
+The black dotted line is the median of the borrowers' credit score, 680, and it seems that most investors would choose the loan requsts more than the median scores.
+
+## 4-4 Investor & Prosper Ratings
+
+Do the investors trust Prosper Rating system? Prosper Rating composed by 7 levels,from lowest-risk to highest-risk, are labeled AA, A, B, C, D, E, and HR (“High Risk”). According to the statistics in the univariate section, we learn that most loan were rated 'C'. To answer the question, I will use the average investors for each rating. Therefore, I used the 'group by' function to calculate the mean investors of all the ratings.   
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+df_mean_investor_per_rating=aggregate(df$Investors, list(df$ProsperRating..Alpha.), mean)
+
+colnames(df_mean_investor_per_rating) = c("Ratings", "Investors_per_llisting_by_rating")
+
+ggplot(aes(x =Ratings, y = Investors_per_llisting_by_rating, fill=Ratings),  data= df_mean_investor_per_rating) +
+  geom_bar(stat = "identity")+
+    scale_colour_brewer()
+
+```
+
+Even though 'C' rating is the majority, 'AA' is the most popular rating among the investors; 'E' and 'HR' are undesirable. It seems that most investors think Prosper Rating System is trustworthy and they are conservative with investments.  
+
+## 4-5 Investor & Loan Original Amount
+
+Do the investors prefer the loan with larger amount or less?
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+ggplot(aes(x =LoanOriginalAmount , y =Investors ),  data= df) +
+  geom_point(alpha=0.2, color='#00c5ff', na.rm = TRUE)+
+    geom_smooth(method='lm')
+
+```
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+cor.test(df$LoanOriginalAmount,df$Investors)
+
+```
+
+Under the amount of $25,000, we can see that there's a positive linear correlation between investors abd the loan amount, and the correlation coefficient is 0.38.
+
+## 4-6 Investor & Interest Rate
+
+Does the interest rate motivate investors?
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(aes(x = BorrowerRate, y =Investors),data = df) + 
+       geom_point(alpha=0.2, color='#00c5ff')+
+       geom_smooth(method='lm')
+
+```
+
+No! The plot above tell us again that the investors on Prosper are conservative. In fact,higher interest rate, less investors.  
+
+```{r echo=FALSE,message=FALSE, warning=FALSE}
+
+cor.test(df$BorrowerRate,df$Investors)
+
+```
+
+Let's calculate the correlation coefficient to look into it closer, the correlation coefficient is -0.274; there's slightly negative correlation between investors and the interest rate.
+
+
+# What variables might be correlated with risky loan?
+
+Now, I would like to transfer my attention to loan status,especially these status-chargedoff, defaulted and pastdue. 
+
+In general, a note goes into Default status when it is 121 or more days past due. When a note is in Default status, Charge Off occurs no later than 150 days past due (i.e. No later than 30 days after the Default status is reached) when there is no reasonable expectation of sufficient payment to prevent the charge off. However, bankruptcies may be charged off earlier based on date of bankruptcy notification. 
+
+Thus, Chargedoff and defaulted loan could cause loss for the lenders, and the past due implies the upcoming risk. I would comapre the loan status and other variables to see if there's any correlation.
+
+## 4-7 Loan Status & Credit Scores
+
+Can we observe differences in borrowers' credit scores with different loan status? The answer is yes. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+df$LoanStatusNew2=df$LoanStatusNew
+levels(df$LoanStatusNew2) = c('Cancelled','Loss',"Completed","Current","Loss","FinalPaymentInProgress","Risk","Risk","Risk","Risk","Risk","Risk")
+
+ggplot(aes(x =LoanStatusNew2 , y =CreditScoreRangeLower, fill=LoanStatusNew2),data = df) + 
+      geom_boxplot()+
+    scale_colour_brewer()
+
+```
+
+We can see median borrower credit scores for the cancelled loan are the lowest, followed by loss, risk, and other normal loans.
+Cancelled loans have small sample size so the results might not be significant. It will be ignored in the following sections.
+The rests are aligned with my intuition:
+people with lower credit score tend not to pay back. Credit scores are an accurate measure of people's credibilities. 
+
+## 4-8  Loan Status & Debt to Income Ratio
+
+Do people who owe debts more tend to default?
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+mean_diration=aggregate(df$DebtToIncomeRatio,list(df$LoanStatusNew2), mean,na.rm=TRUE)
+colnames(mean_diration)=c('LoanStatus','DIratio_mean' )
+ggplot(aes(x =LoanStatus , y =DIratio_mean, fill=LoanStatus),data = mean_diration) +
+      geom_bar(stat = "identity")+
+      scale_colour_brewer()
+
+       
+```
+
+From the above graph, we can clearly see that borrowers whose loans have loss (defaulted or chargedoff) have an average debt-to-income-ratio of 0.35, followed by risky loans (around 0.3). Borrowers with higher leverage on debt tend to default on their loans.
+
+## 4-9  Loan Status & Interest Rate
+
+Loan status is the outcome of investment in terms of risk. Do risk metrics like borrower rates reflect the outcome?
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+mean_rate=aggregate(df$BorrowerRate,list(df$LoanStatusNew2), mean,na.rm=TRUE)
+colnames(mean_rate)=c('LoanStatus','BorrowerRate_mean' )
+
+ggplot(aes(x =LoanStatus , y =BorrowerRate_mean, fill=LoanStatus),data = mean_rate) +
+      geom_bar(stat = "identity")+
+      scale_colour_brewer()
+       
+```
+
+Loss and risk categories have the highest of average borrower rates (more than 20%). Those borrowers are viewed by investors as riskier investment, and the outcomes do reflect their expectations.
+
+## 4-10  Loan Status & Loan Original Amount
+
+Do risky borrowers not get trust from investors so they can't borrow as much money as other less risky borrowers?
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+median_amount=aggregate(df$LoanOriginalAmount,list(df$LoanStatusNew2), median,na.rm=TRUE)
+colnames(median_amount)=c('LoanStatus','Amount_median' )
+
+ggplot(aes(x =LoanStatus , y =Amount_median, fill=LoanStatus),data = median_amount) +
+      geom_bar(stat = "identity")+
+      scale_colour_brewer()
+           
+```
+
+Although median loan amount for current loans is $10000, but the median for completed loans is less than $5000 (same amount as loss loan)Those current loans can also turn into loss or risky loans. From this graph, we can't say there is a strong pattern for sure.
+
+## 4-11  Loan Status & Stated Monthly Income
+
+Is there any relation between loans' risk categories and borrowers' monthly income?
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+mean_income=aggregate(df$StatedMonthlyIncome,list(df$LoanStatusNew2), median,na.rm=TRUE)
+colnames(mean_income)=c('LoanStatus','Income_median' )
+
+ggplot(aes(x =LoanStatus , y =Income_median, fill=LoanStatus),data = mean_income) +
+      geom_bar(stat = "identity")+
+      scale_colour_brewer()
+           
+```
+
+We can see pretty interesting findings here. Borrowers whose loan status are current or payment in progress have the highest income.
+Borrowers whose loans are risk or completed have about the same income, followed by loss.
+People with least monthly income have hard time paying back the loans.
+People with monthly income around $4500 have quite different behavior - some of them pay back on time but some don't.
+
+## 4-12  Loan Status & Trades Never Delinquent
+
+When borrowers are never delinquent on their trades, will they also pay back the loans on time?
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+mean_Delinquent=aggregate(df$TradesNeverDelinquent..percentage.,list(df$LoanStatusNew2), mean,na.rm=TRUE)
+colnames(mean_Delinquent)=c('LoanStatus','Never_Delinquent_percentage_mean' )
+
+ggplot(aes(x =LoanStatus , y =Never_Delinquent_percentage_mean, fill=LoanStatus),data =mean_Delinquent) +geom_bar(stat = "identity")+
+    scale_colour_brewer()
+           
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+mean_Delinquent
+
+```
+
+Definitely yes. We can see that difference in never_delinquent_percentage between loss and current loans are almost 10% (91.08% - 81.91%)
+
+## 4-13  Occupation & Credit Score
+
+Except for the main features, I am also curious about the correlation between occupation with the credit score, so I choose 4 occupations based on the amount and the title differences-Executive, Computer Programmer, Administrative Assistant and Clerical.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+data_sun=subset(df, 
+             Occupation == 'Computer Programmer' | Occupation == 'Executive' |
+             Occupation == 'Administrative Assistant' | Occupation == 'Clerical')
+
+mean_occupation=aggregate(data_sun$CreditScoreRangeLower,list(data_sun$Occupation), mean,na.rm=TRUE)
+colnames(mean_occupation)=c('Occupation','CreditScoreRangeLower_mean')
+
+
+ggplot(aes(x=Occupation, y=CreditScoreRangeLower_mean, fill=Occupation), data=mean_occupation ) +
+        geom_bar(stat = "identity")+
+    scale_colour_brewer()
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+mean_occupation
+
+```
+
+The finding is quite interesting and intuitive;  the Executive and Computer programmer have relatively high credit scores.
+
+# 5. Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. How did the feature(s) of interest vary with other features in \
+the set?
+
+For the 'Investors' variable, there are relatively strong correlation with 'ListingCategory', 
+'ProsperRating' 'LoanOriginalAmount' and 'Term'. Based on the analysis, we can learn that investors prefer the 3-year business loan with AA ratings, and if the amount of the loan is under $25,000, the larger amoumt will attract more investors.  
+
+As for the other main feature 'LoanStatus' variable, there are relatively strong correlation with 'DebtToIncomeRatio', 'BorrowerRate', 'StatedMonthlyIncome' and 'TradesNeverDelinquent'.
+Based on the analysis, we can learn that the borrowers with higher debt-income ratio, higher  interest rate, less monthly income and less trades that never delinquent are more likely to fail in repayment. 
+
+### Did you observe any interesting relationships between the other features \
+(not the main feature(s) of interest)?
+
+Yes, the relationship between occupation and the credit score fits the common stereotype well. The 
+decent job titles implies the higher credit scores.
+
+### What was the strongest relationship you found?
+
+The relationship between Investors and ProsperRating is strong. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+df_mean_investor_per_rating
+
+```
+
+The gap between the average investors of 'AA' and 'HR' is almost 143, which means that each AA rating loan can attract 143 more investors than the 'HR' loan. The relationship is not only strong but also significant.  
+
+# 6. Multivariate Plots Section
+
+## 6-1 Correlation Plot of 'Investors'
+
+'Investors' is one of the most important features of the report, so I would like to see the correlation coefficient between 'Investors' and other numerical continuous variables of the data.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+df_matrix=data.frame(df$Investors, df$BorrowerRate,df$CreditScoreRangeLower, df$Closedendcredit, df$InquiriesLast6Months, df$BankcardUtilization, df$TradesNeverDelinquent..percentage., df$DebtToIncomeRatio, df$StatedMonthlyIncome,df$LoanOriginalAmount, df$creditlength)
+
+ggcorr(df_matrix, palette = "RdBu", label = TRUE, angle = 70)
+
+```
+
+From the plot, we can see the pearson's r between the variables and 'Investors.' Next,I will choose the variables which have comparatively stronger correlation with 'Investors' and also apply the other main feature in the report 'Loan Status' and some other categorical variables to create some multivariate plots.
+
+## 6-2 'Investors' VS. 'IsBorrowerHomeowner' VS.'CreditScoreRangeLower' 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+pr05 = quantile(df$CreditScoreRangeLower, 0.05, na.rm=TRUE)
+pr95 = quantile(df$CreditScoreRangeLower, 0.95, na.rm=TRUE)
+df2 = subset(df, CreditScoreRangeLower >= pr05 & CreditScoreRangeLower <= pr95) 
+ggplot(df2, aes(x=CreditScoreRangeLower, y=Investors, color=IsBorrowerHomeowner)) +
+  geom_point(alpha=0.1) + scale_colour_hue(l=50) +
+  geom_smooth(method=lm, se=FALSE)
+
+```
+
+The interesting finding in the plot above is that starting from the scores 650, even the borrowers have the same scores, the investors are more likely to fund the homeowner's loans. 
+
+## 6-3 'Investors' VS. 'Occupation' VS.'CreditScoreRangeLower' 
+
+As the analysis in 4-18, I will use 4 occupations-Executive, Computer Programmer, Administrative Assistant and Clerical here and I would like to know if the investors have a bias against the borrowers who are not from management level or Computer Programmer.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+df_occ = as.data.frame(table(df$Occupation))
+df_occ = df_occ[order(-df_occ$Freq), ]
+head(df_occ)
+
+df3 = subset(df2, 
+             Occupation == 'Computer Programmer' | Occupation == 'Executive' |
+             Occupation == 'Administrative Assistant' | Occupation == 'Clerical') 
+
+ggplot(df3, aes(x=CreditScoreRangeLower, y=Investors, color=Occupation)) +
+  geom_point() + scale_colour_hue(l=50) +
+  geom_smooth(method=lm, se=FALSE) 
+
+```
+
+The finding here is interesting but cruel: Computer Programmer is the most popular occupation from the scores 600 to 700, and after 700, Executive become the most popular occpation gradually .   
+Even the borrowers have the same credit scores, the investors prefer the borrowers with decent job titles.
+
+## 6-4 'LoanStatus' VS. 'BorrowerState' VS.'IncomeRange' 
+
+Last, let's add more demographic variables to the analysis. I would like to use the other main feature of the report 'LoanStatus'to see the borrowers from which State are more likely to successfully repay to the loans.
+
+First, I'd like to narrow the 50 States down to top 5 States by the amount of the borrowers based on the analysis in the univariate section. The top 5 States include California, Texas, Florida, New York and Illinois.
+
+In order to calculate the risky loan rate , I would also simplify the levels of the loan status, so I will combine the status 'Chargedoff' and 'Defualted' as a new level 'Loss' and the rename the 'Past Due' level 'Risk'. Here, I will use the sum of 'Loss' and 'Risk' to calculate the risky loan rate.
+
+To make the analysis more accurate, I also use the 'IncomeRange' as another variable here. Thus, we will learn that if the borrowers in the same income range will have different repayment behaviour by different residential State.  
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+
+df$LoanStatusNew2 = df$LoanStatus
+levels(df$LoanStatusNew2) = c('Cancelled', 'Loss', 'Normal',
+                             'Normal', 'Loss', 'Normal',
+                             'Risk', 'Risk', 'Risk',
+                             'Risk', 'Risk', 'Risk')
+
+df$IncomeRangeNew = df$IncomeRange
+levels(df$IncomeRangeNew) = c('$0', '$1-24,999', '$100,000+',
+                             '$25,000-49,999', '$50,000-74,999', '$75,000-99,999',
+                             'Not displayed', '$0')
+df$IncomeRangeNew = factor(df$IncomeRangeNew, 
+                           levels = c('$0', '$1-24,999', '$25,000-49,999', '$50,000-74,999', 
+                                      '$75,000-99,999', '$100,000+', 'Not displayed'))
+
+df4 = subset(df, IncomeRangeNew != 'Not displayed') 
+df4 = subset(df4, BorrowerState == 'CA' | BorrowerState == 'TX' | 
+               BorrowerState == 'NY' | BorrowerState == 'FL' | BorrowerState == 'IL') 
+
+state_occ = as.data.frame(table(df$BorrowerState))
+state_occ = state_occ[order(-state_occ$Freq), ]
+head(state_occ)
+
+count_loss = function(x) {
+  return(sum(x == 'Loss' | x == 'Risk') / length(x))
+}
+
+df5 = aggregate(LoanStatusNew2 ~ IncomeRangeNew + BorrowerState, df4, count_loss)
+ggplot(data =  df5, mapping = aes(x = IncomeRangeNew, y = BorrowerState)) +
+  geom_tile(aes(fill = LoanStatusNew2), colour = "white") +
+  geom_text(aes(label = sprintf("%0.2f", LoanStatusNew2)), vjust = 1) +
+  scale_fill_gradient(low = "white", high = "darkred") +
+  theme_bw() + theme(legend.position = "none")
+
+```
+
+The informative plot above shows us that in the lowest income range, the borrowers from New York are more likely to have better repayment behaviour; in the highest income range, the borrowers from Taxes are more likely to have better repayment behaviour. 
+
+#7. Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. Were there features that strengthened each other in terms of \
+looking at your feature(s) of interest?
+
+‘Investors’ VS. ‘Occupation’ VS.‘CreditScoreRangeLower’ is extended from the 4-18 plot in the bivariate section. I never thought that the ‘Occupation’ is so important to the investors, and the magnitude of the relationship between investors and occupation become more significant while we control the 'credit score' variable. 
+
+### Were there any interesting or surprising interactions between features?
+In the 6-4 ‘LoanStatus’ VS. ‘BorrowerState’ VS.‘IncomeRange’, I found that in general, the borrowers from Taxes and New York have better repayment behaviors, and the borrowers from Illinois have the worst one. It's quite interesting that the geographic variable might also be a predictor variable in the analysis.
+
+### OPTIONAL: Did you create any models with your set? Discuss the \
+strengths and limitations of your model.
+
+------
+
+#8. Final Plots and Summary
+
+###8-1 Plot One
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(aes(x =Category, y = Investors_per_llisting, fill=Category),  data= df_mean_investor_per_category) +
+  geom_bar(stat = "identity")+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+    scale_colour_brewer()+
+    ggtitle('Average Investors by Listing Category') +
+    xlab('Listing Category') +
+    ylab('Average Investors')
+
+```
+
+### Description One
+
+Laon listings under the category 'Business' have the most mean investors; and loan listings under the category 'Household Expenses' have the least mean investors. Investors incline to trust athe  loan specifically intended for business purposes instead of a personal fixed expense.   
+
+### 8-2 Plot Two
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+colnames(df5) = c("Income_Range", "Residential_States", "Risky_Loan_Rate")
+
+ggplot(data = df5, mapping = aes(x =Income_Range , y = Residential_States)) +
+  geom_tile(aes(fill = Risky_Loan_Rate), colour = "white") +
+  geom_text(aes(label = sprintf("%0.2f", Risky_Loan_Rate)), vjust = 0.7) +
+   scale_fill_gradient(low = "white", high = "#4393C3")+
+  theme_bw() +theme(legend.position = "right", 
+                     legend.title = element_text(colour="black", size=10, 
+                                      face="bold"),
+                     legend.text = element_text(colour="black", size=10))+
+  ggtitle('Risky Loan Rate by Residential States and Income') 
+
+```
+
+### Description Two
+
+The income range is positively and strongly correlated with risky loan rate, the higher income borrowers have less risky loan rate. The variables Borrower's State also correlate with the risky loan rate, we can see the borrowers in some State have relatively higher risky loan rate in various income range. Thus, income range and Borrower's State can be used in a model to predict the risk of a loan. 
+
+
+### 8-3 Plot Three
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+ggplot(df3, aes(x=CreditScoreRangeLower, y=Investors, color=Occupation)) +
+  geom_point(alpha=0.1) + scale_colour_hue(l = 70, c = 150) +
+  ylim(0, quantile(df$Investors, 0.995))+   
+  geom_smooth(method=lm, se=FALSE)+
+    theme(legend.position = "right", 
+                     legend.title = element_text(colour="black", size=10, 
+                                      face="bold"),
+                     legend.text = element_text(colour="black", size=10))+
+    ggtitle('Average Investors by Credit Scores and Job Titles') 
+
+```
+
+### Description Three
+
+The plot indicates that a linear model could be constructed to predict the average investors of variables using 99.5% investors as the outcome variable and credit scores as the predictor variable. Holding credit scores constant, the borrowers with more respectable job titils, such as computer programmer can attract more investors than borrowers with less decent job titles to account for additional variability in investors.
+
+------
+
+# Reflection
+
+The Prosper loan dataset contains information on 113,937 observations across 81 variables. I started by understanding the individual variables in the data set, and then I picked up 36 variables to explored interesting questions and leads as I continued to make observations on plots. Eventually, I explored the investors and loan status across several variables.
+
+While analysing the dataset, one thing made me anxious: the correlations between main features and other variables are not so significant, the highest Pearson's R I've seen is around 0.4. I expected the correlations between variables can be as strong as the tutorial materials, and the plots can easily be interpreted by themselves, so the fact  After consulting with my data scientist friends, they told me that for the data in real world, Pearson's R around 0.4 is relatively high, and it's really difficult to see a 0.8 or 0.9 ones. Thus, I feel much more relieved about the dataset and have the confidence to exploring the data. 
+
+I found success while creating multivariate plots. As I mentioned above, I found the correlation between two variables are not strong and hard to be awared. However, when I added one more variable into the analysises, holding one of the variables constant, the correlation become much easier to be awared. For example, the correlation with 'IsBorrowerHomeowner' and 'Investors'are not notable in the bivariate section, however, when I added the credit score as the third variables, I can clearly see that homeowners somehow can attract more investors.
+
+With the analysis above, I would like to know if the local ecoomy will affect the risky loan rate.
+In the multivariate section, I found that the borrowers in certain States are likely to have worse repayment behaviors, which might be caused by local economy. If I have some local economic  indicators, such as as Consumer confidence index, I would like to apply the data to the analysis and examine the correlation between the local economy and the repayment behaviors there. 
+
+
+
+
+
