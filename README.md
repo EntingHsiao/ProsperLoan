@@ -2,11 +2,11 @@
 
 In the project, I conducted the exploratory data analysis and created an RMD file that explores the variables, structure, patterns, oddities, and underlying relationships of Prosper's loan data.
 
-Prosper Marketplace,Inc., which was founded in 2005, is America’s first peer-to-peer lending marketplace, Borrowers request personal loans on Prosper and investors (individual or institutional) can fund anywhere from $2,000 to $35,000 per loan request.
+Prosper Marketplace Inc., which was founded in 2005, is America’s first peer-to-peer lending marketplace, Borrowers request personal loans on Prosper and investors (individual or institutional) can fund anywhere from $2,000 to $35,000 per loan request.
 
-This report explores the Prosper’s loan data, which contains 113,937 loans with 81 variables on each loan, and it was Last updated on 03/11/2014. The dataset will be used for exploring two main ideas 1) Investors’ preferences 2)The relationship between borrowers’characteristics and the risks.
+This report explores the Prosper’s loan data, which contains 113,937 loans with 81 variables on each loan. It was last updated on 03/11/2014. The dataset will be used for exploring two main ideas 1) investors’ preferences 2) the relationship between borrowers’ characteristics and the risks.
 
-The tasks in this project are as follows:
+The tasks in this project are listed as follows:
 
 * Introduction
 * Univariate Plots Section
